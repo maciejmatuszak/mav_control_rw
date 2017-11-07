@@ -34,16 +34,17 @@ void RcInterfaceAci::rcCallback(const sensor_msgs::JoyConstPtr& msg)
   last_data_.timestamp = msg->header.stamp;
 
   if (is_on_) {
-    last_data_.right_up_down = msg->axes[0];
-    last_data_.right_side = -msg->axes[1];
-    last_data_.left_up_down = msg->axes[2];
-    last_data_.left_side = -msg->axes[3];
+    last_data_.right_up_down = msg->axes[1];
+    last_data_.right_side = msg->axes[0];
+    last_data_.left_up_down = msg->axes[3];
+    last_data_.left_side = msg->axes[2];
 
     if (msg->axes[5] > 0.0)
       last_data_.control_interface = RcData::ControlInterface::ON;
     else
       last_data_.control_interface = RcData::ControlInterface::OFF;
 
+    RcData::ControlMode old_mode = last_data_.control_mode;
     if (msg->axes[4] <= -0.5)
       last_data_.control_mode = RcData::ControlMode::MANUAL;
     else if (msg->axes[4] > -0.5 && msg->axes[4] < 0.5)
@@ -51,6 +52,25 @@ void RcInterfaceAci::rcCallback(const sensor_msgs::JoyConstPtr& msg)
     else
       last_data_.control_mode = RcData::ControlMode::POSITION_CONTROL;
 
+    if(old_mode != last_data_.control_mode)
+    {
+        switch (last_data_.control_mode)
+        {
+        case RcData::ControlMode::MANUAL:
+            ROS_INFO("Control Mode canged to MANUAL");
+            break;
+        case RcData::ControlMode::ALTITUDE_CONTROL:
+            ROS_INFO("Control Mode canged to ALTITUDE_CONTROL");
+            break;
+        case RcData::ControlMode::POSITION_CONTROL:
+            ROS_INFO("Control Mode canged to POSITION_CONTROL");
+            break;
+        default:
+            ROS_ERROR("Control Mode canged to Unknown value!!!");
+            break;
+        }
+
+    }
     last_data_.wheel = msg->axes[6];
   }
   else {  //set to zero if RC is off
@@ -101,7 +121,7 @@ float RcInterfaceAci::getStickDeadzone() const
 
 bool RcInterfaceAci::isRcOn(const sensor_msgs::JoyConstPtr& msg) const
 {
-  return (msg->buttons[0] == 1);
+  return (msg->axes[5] > -7000);
 }
 
 }  // end namespace mav_control_interface
