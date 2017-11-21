@@ -44,6 +44,23 @@ class RcInterfaceAci : public RcInterfaceBase {
 
   RcData last_data_;
   bool is_on_;
+  int axes_ch_index_mode;
+  int axes_ch_index_rc_on;
+  int axes_ch_index_wheel;
+
+  int axes_ch_index_right_vert;
+  int axes_ch_index_right_horiz;
+  int axes_ch_index_left_vert;
+  int axes_ch_index_left_horiz;
+
+  double axes_ch_factor_right_vert;
+  double axes_ch_factor_right_horiz;
+  double axes_ch_factor_left_vert;
+  double axes_ch_factor_left_horiz;
+  double axes_ch_factor_mode;
+  double axes_ch_factor_rc_on;
+  double axes_ch_factor_wheel;
+
 };
 }  // end namespace mav_control_interface
 #endif /* RC_INTERFACE_H_ */

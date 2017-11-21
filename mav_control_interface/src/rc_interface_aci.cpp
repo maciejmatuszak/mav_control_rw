@@ -23,9 +23,42 @@ namespace mav_control_interface {
 RcInterfaceAci::RcInterfaceAci(const ros::NodeHandle& nh)
     : RcInterfaceBase(),
       nh_(nh),
-      is_on_(false)
+      is_on_(false),
+      axes_ch_index_mode(5),
+      axes_ch_index_rc_on(6),
+      axes_ch_index_wheel(4),
+      axes_ch_index_right_horiz(0),
+      axes_ch_index_right_vert(1),
+      axes_ch_index_left_horiz(3),
+      axes_ch_index_left_vert(2),
+
+      axes_ch_factor_mode(-1),
+      axes_ch_factor_rc_on(1),
+      axes_ch_factor_wheel(-1),
+
+      axes_ch_factor_right_horiz(-1.0),
+      axes_ch_factor_right_vert(-1.0),
+      axes_ch_factor_left_horiz(-1.0),
+      axes_ch_factor_left_vert(-1.0)
 {
-  rc_sub_ = nh_.subscribe("rc", 1, &RcInterfaceAci::rcCallback, this);
+      rc_sub_ = nh_.subscribe("rc", 1, &RcInterfaceAci::rcCallback, this);
+      nh_.param("axes_ch_index_mode",axes_ch_index_mode, axes_ch_index_mode);
+      nh_.param("axes_ch_index_rc_on",axes_ch_index_rc_on, axes_ch_index_rc_on);
+      nh_.param("axes_ch_index_wheel",axes_ch_index_wheel, axes_ch_index_wheel);
+
+      nh_.param("axes_ch_index_right_horiz", axes_ch_index_right_horiz,  axes_ch_index_right_horiz);
+      nh_.param("axes_ch_index_right_vert",  axes_ch_index_right_vert,   axes_ch_index_right_vert);
+      nh_.param("axes_ch_index_left_horiz",  axes_ch_index_left_horiz,   axes_ch_index_left_horiz);
+      nh_.param("axes_ch_index_left_vert",   axes_ch_index_left_vert,    axes_ch_index_left_vert);
+
+      nh_.param("axes_ch_factor_mode",        axes_ch_factor_mode,         axes_ch_factor_mode);
+      nh_.param("axes_ch_factor_rc_on",       axes_ch_factor_rc_on,        axes_ch_factor_rc_on);
+      nh_.param("axes_ch_factor_wheel",       axes_ch_factor_wheel,        axes_ch_factor_wheel);
+
+      nh_.param("axes_ch_factor_right_horiz", axes_ch_factor_right_horiz,  axes_ch_factor_right_horiz);
+      nh_.param("axes_ch_factor_right_vert",  axes_ch_factor_right_vert,   axes_ch_factor_right_vert);
+      nh_.param("axes_ch_factor_left_horiz",  axes_ch_factor_left_horiz,   axes_ch_factor_left_horiz);
+      nh_.param("axes_ch_factor_left_vert",   axes_ch_factor_left_vert,    axes_ch_factor_left_vert);
 }
 
 void RcInterfaceAci::rcCallback(const sensor_msgs::JoyConstPtr& msg)
@@ -34,20 +67,35 @@ void RcInterfaceAci::rcCallback(const sensor_msgs::JoyConstPtr& msg)
   last_data_.timestamp = msg->header.stamp;
 
   if (is_on_) {
-    last_data_.right_up_down = msg->axes[1];
-    last_data_.right_side = msg->axes[0];
-    last_data_.left_up_down = msg->axes[3];
-    last_data_.left_side = msg->axes[2];
+    last_data_.right_side =    msg->axes[axes_ch_index_right_horiz] * axes_ch_factor_right_horiz;
+    last_data_.right_up_down = msg->axes[axes_ch_index_right_vert]  * axes_ch_factor_right_vert;
 
-    if (msg->axes[5] > 0.0)
+    last_data_.left_side =    msg->axes[axes_ch_index_left_horiz]   * axes_ch_factor_left_horiz;
+    last_data_.left_up_down = msg->axes[axes_ch_index_left_vert]    * axes_ch_factor_left_vert;
+
+    RcData::ControlInterface old_rc_on = last_data_.control_interface;
+    if ((msg->axes[axes_ch_index_rc_on] * axes_ch_factor_rc_on) > 0.0)
       last_data_.control_interface = RcData::ControlInterface::ON;
     else
       last_data_.control_interface = RcData::ControlInterface::OFF;
 
+    if(old_rc_on != last_data_.control_interface)
+    {
+        if(last_data_.control_interface == RcData::ControlInterface::ON)
+        {
+            ROS_INFO("RC INTERFACE is ON");
+        }
+        else
+        {
+            ROS_INFO("RC INTERFACE is OFF");
+        }
+    }
+
     RcData::ControlMode old_mode = last_data_.control_mode;
-    if (msg->axes[4] <= -0.5)
+    double mode_val = msg->axes[axes_ch_index_mode] * axes_ch_factor_mode;
+    if (mode_val <= -0.5)
       last_data_.control_mode = RcData::ControlMode::MANUAL;
-    else if (msg->axes[4] > -0.5 && msg->axes[4] < 0.5)
+    else if (mode_val > -0.5 && mode_val < 0.5)
       last_data_.control_mode = RcData::ControlMode::ALTITUDE_CONTROL;
     else
       last_data_.control_mode = RcData::ControlMode::POSITION_CONTROL;
@@ -71,7 +119,7 @@ void RcInterfaceAci::rcCallback(const sensor_msgs::JoyConstPtr& msg)
         }
 
     }
-    last_data_.wheel = msg->axes[6];
+    last_data_.wheel = msg->axes[axes_ch_index_wheel] * axes_ch_factor_wheel;
   }
   else {  //set to zero if RC is off
     ROS_WARN_STREAM_THROTTLE(5.0, "Detected RC Off.");
