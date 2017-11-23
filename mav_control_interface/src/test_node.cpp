@@ -105,7 +105,7 @@ int main(int argc, char** argv){
   ros::init(argc, argv, "test_lowlevel_flightmanager");
   ros::NodeHandle nh, pnh("~");
 
-  std::shared_ptr<RcInterfaceAci> rc(new RcInterfaceAci(nh));
+  std::shared_ptr<RcInterfaceAci> rc(new RcInterfaceAci(nh, pnh));
   std::shared_ptr<DummyController> controller(new DummyController);
 
   MavControlInterface control_interface(nh, pnh, controller, rc);

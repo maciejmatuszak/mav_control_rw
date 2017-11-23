@@ -27,7 +27,7 @@ class RcInterfaceAci : public RcInterfaceBase {
  public:
   static constexpr float STICK_DEADZONE = 0.1;
 
-  RcInterfaceAci(const ros::NodeHandle& nh);
+  RcInterfaceAci(const ros::NodeHandle& nh, const ros::NodeHandle& private_nh);
 
   virtual std::string getName() const;
   virtual bool isActive() const;
@@ -40,12 +40,14 @@ class RcInterfaceAci : public RcInterfaceBase {
   bool isRcOn(const sensor_msgs::JoyConstPtr& msg) const;
 
   ros::NodeHandle nh_;
+  ros::NodeHandle private_nh_;
   ros::Subscriber rc_sub_;
 
   RcData last_data_;
   bool is_on_;
   int axes_ch_index_mode;
   int axes_ch_index_rc_on;
+  int axes_ch_index_control;
   int axes_ch_index_wheel;
 
   int axes_ch_index_right_vert;
@@ -59,6 +61,7 @@ class RcInterfaceAci : public RcInterfaceBase {
   double axes_ch_factor_left_horiz;
   double axes_ch_factor_mode;
   double axes_ch_factor_rc_on;
+  double axes_ch_factor_control;
   double axes_ch_factor_wheel;
 
 };

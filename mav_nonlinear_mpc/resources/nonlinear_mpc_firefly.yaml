@@ -39,7 +39,7 @@ pitch_max: deg(25.0)
 thrust_min: 5
 thrust_max: 20
 
-K_yaw: 1.8
+K_yaw: 2.0
 
 Ki_xy: 0.2
 Ki_z: 0.3

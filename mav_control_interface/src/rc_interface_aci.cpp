@@ -20,11 +20,13 @@
 
 namespace mav_control_interface {
 
-RcInterfaceAci::RcInterfaceAci(const ros::NodeHandle& nh)
+RcInterfaceAci::RcInterfaceAci(const ros::NodeHandle& nh, const ros::NodeHandle& private_nh)
     : RcInterfaceBase(),
       nh_(nh),
+      private_nh_(private_nh),
       is_on_(false),
       axes_ch_index_mode(5),
+      axes_ch_index_control(6),
       axes_ch_index_rc_on(6),
       axes_ch_index_wheel(4),
       axes_ch_index_right_horiz(0),
@@ -34,6 +36,7 @@ RcInterfaceAci::RcInterfaceAci(const ros::NodeHandle& nh)
 
       axes_ch_factor_mode(-1),
       axes_ch_factor_rc_on(1),
+      axes_ch_factor_control(1),
       axes_ch_factor_wheel(-1),
 
       axes_ch_factor_right_horiz(-1.0),
@@ -42,23 +45,25 @@ RcInterfaceAci::RcInterfaceAci(const ros::NodeHandle& nh)
       axes_ch_factor_left_vert(-1.0)
 {
       rc_sub_ = nh_.subscribe("rc", 1, &RcInterfaceAci::rcCallback, this);
-      nh_.param("axes_ch_index_mode",axes_ch_index_mode, axes_ch_index_mode);
-      nh_.param("axes_ch_index_rc_on",axes_ch_index_rc_on, axes_ch_index_rc_on);
-      nh_.param("axes_ch_index_wheel",axes_ch_index_wheel, axes_ch_index_wheel);
+      private_nh_.param("axes_ch_index_mode",axes_ch_index_mode, axes_ch_index_mode);
+      private_nh_.param("axes_ch_index_rc_on",axes_ch_index_rc_on, axes_ch_index_rc_on);
+      private_nh_.param("axes_ch_index_control",axes_ch_index_control, axes_ch_index_control);
+      private_nh_.param("axes_ch_index_wheel",axes_ch_index_wheel, axes_ch_index_wheel);
 
-      nh_.param("axes_ch_index_right_horiz", axes_ch_index_right_horiz,  axes_ch_index_right_horiz);
-      nh_.param("axes_ch_index_right_vert",  axes_ch_index_right_vert,   axes_ch_index_right_vert);
-      nh_.param("axes_ch_index_left_horiz",  axes_ch_index_left_horiz,   axes_ch_index_left_horiz);
-      nh_.param("axes_ch_index_left_vert",   axes_ch_index_left_vert,    axes_ch_index_left_vert);
+      private_nh_.param("axes_ch_index_right_horiz", axes_ch_index_right_horiz,  axes_ch_index_right_horiz);
+      private_nh_.param("axes_ch_index_right_vert",  axes_ch_index_right_vert,   axes_ch_index_right_vert);
+      private_nh_.param("axes_ch_index_left_horiz",  axes_ch_index_left_horiz,   axes_ch_index_left_horiz);
+      private_nh_.param("axes_ch_index_left_vert",   axes_ch_index_left_vert,    axes_ch_index_left_vert);
 
-      nh_.param("axes_ch_factor_mode",        axes_ch_factor_mode,         axes_ch_factor_mode);
-      nh_.param("axes_ch_factor_rc_on",       axes_ch_factor_rc_on,        axes_ch_factor_rc_on);
-      nh_.param("axes_ch_factor_wheel",       axes_ch_factor_wheel,        axes_ch_factor_wheel);
+      private_nh_.param("axes_ch_factor_mode",        axes_ch_factor_mode,         axes_ch_factor_mode);
+      private_nh_.param("axes_ch_factor_rc_on",       axes_ch_factor_rc_on,        axes_ch_factor_rc_on);
+      private_nh_.param("axes_ch_factor_control",     axes_ch_factor_control,      axes_ch_factor_control);
+      private_nh_.param("axes_ch_factor_wheel",       axes_ch_factor_wheel,        axes_ch_factor_wheel);
 
-      nh_.param("axes_ch_factor_right_horiz", axes_ch_factor_right_horiz,  axes_ch_factor_right_horiz);
-      nh_.param("axes_ch_factor_right_vert",  axes_ch_factor_right_vert,   axes_ch_factor_right_vert);
-      nh_.param("axes_ch_factor_left_horiz",  axes_ch_factor_left_horiz,   axes_ch_factor_left_horiz);
-      nh_.param("axes_ch_factor_left_vert",   axes_ch_factor_left_vert,    axes_ch_factor_left_vert);
+      private_nh_.param("axes_ch_factor_right_horiz", axes_ch_factor_right_horiz,  axes_ch_factor_right_horiz);
+      private_nh_.param("axes_ch_factor_right_vert",  axes_ch_factor_right_vert,   axes_ch_factor_right_vert);
+      private_nh_.param("axes_ch_factor_left_horiz",  axes_ch_factor_left_horiz,   axes_ch_factor_left_horiz);
+      private_nh_.param("axes_ch_factor_left_vert",   axes_ch_factor_left_vert,    axes_ch_factor_left_vert);
 }
 
 void RcInterfaceAci::rcCallback(const sensor_msgs::JoyConstPtr& msg)
@@ -73,13 +78,13 @@ void RcInterfaceAci::rcCallback(const sensor_msgs::JoyConstPtr& msg)
     last_data_.left_side =    msg->axes[axes_ch_index_left_horiz]   * axes_ch_factor_left_horiz;
     last_data_.left_up_down = msg->axes[axes_ch_index_left_vert]    * axes_ch_factor_left_vert;
 
-    RcData::ControlInterface old_rc_on = last_data_.control_interface;
-    if ((msg->axes[axes_ch_index_rc_on] * axes_ch_factor_rc_on) > 0.0)
+    RcData::ControlInterface old_control = last_data_.control_interface;
+    if ((msg->axes[axes_ch_index_control] * axes_ch_factor_control) > 0.0)
       last_data_.control_interface = RcData::ControlInterface::ON;
     else
       last_data_.control_interface = RcData::ControlInterface::OFF;
 
-    if(old_rc_on != last_data_.control_interface)
+    if(old_control != last_data_.control_interface)
     {
         if(last_data_.control_interface == RcData::ControlInterface::ON)
         {
@@ -169,7 +174,7 @@ float RcInterfaceAci::getStickDeadzone() const
 
 bool RcInterfaceAci::isRcOn(const sensor_msgs::JoyConstPtr& msg) const
 {
-  return (msg->axes[5] > -7000);
+  return (msg->axes[axes_ch_index_rc_on] * axes_ch_factor_rc_on > 0.5);
 }
 
 }  // end namespace mav_control_interface

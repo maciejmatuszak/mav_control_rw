@@ -160,7 +160,7 @@ int main(int argc, char** argv)
       new mav_control::NonLinearModelPredictiveControllerNode(nh, private_nh));
 
   std::shared_ptr<mav_control_interface::RcInterfaceAci> rc(
-      new mav_control_interface::RcInterfaceAci(nh));
+      new mav_control_interface::RcInterfaceAci(nh, private_nh));
 
   mav_control_interface::MavControlInterface control_interface(nh, private_nh, mpc, rc);
 
