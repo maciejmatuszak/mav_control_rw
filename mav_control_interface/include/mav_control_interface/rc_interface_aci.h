@@ -21,7 +21,6 @@
 
 #include <mav_control_interface/rc_interface.h>
 #include <nav_msgs/Odometry.h>
-#include <tf/transform_broadcaster.h>
 
 namespace mav_control_interface {
 
@@ -47,10 +46,9 @@ class RcInterfaceAci : public RcInterfaceBase {
   ros::Subscriber rc_sub_;
   ros::Subscriber odometry_syb_;
 
-  geometry_msgs::TransformStamped locked_transform_;
-  tf::TransformBroadcaster tf_broadcaster_;
+
   ros::ServiceClient wp_nav_srv_client_;
-  std::string uav_frame_id_;
+  std::string lock_tf_frame_id_;
   bool lock_next_odometry_;
 
   RcData last_data_;

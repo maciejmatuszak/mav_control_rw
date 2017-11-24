@@ -17,6 +17,7 @@
 */
 
 #include <mav_control_interface/rc_interface_aci.h>
+#include <tf/transform_broadcaster.h>
 
 namespace mav_control_interface {
 
@@ -45,59 +46,66 @@ RcInterfaceAci::RcInterfaceAci(const ros::NodeHandle& nh, const ros::NodeHandle&
       axes_ch_factor_left_vert(-1.0),
 
       lock_next_odometry_(false),
-      uav_frame_id_("uav")
+      lock_tf_frame_id_("uav")
 {
 
       rc_sub_ = nh_.subscribe("rc", 1, &RcInterfaceAci::rcCallback, this);
-      private_nh_.param("axes_ch_index_mode",axes_ch_index_mode, axes_ch_index_mode);
-      private_nh_.param("axes_ch_index_rc_on",axes_ch_index_rc_on, axes_ch_index_rc_on);
-      private_nh_.param("axes_ch_index_control",axes_ch_index_control, axes_ch_index_control);
-      private_nh_.param("axes_ch_index_wheel",axes_ch_index_lock_tf, axes_ch_index_lock_tf);
+      private_nh_.param("axes_ch_index_mode",         axes_ch_index_mode, axes_ch_index_mode);
+      private_nh_.param("axes_ch_index_rc_on",        axes_ch_index_rc_on, axes_ch_index_rc_on);
+      private_nh_.param("axes_ch_index_control",      axes_ch_index_control, axes_ch_index_control);
+      private_nh_.param("axes_ch_index_lock_tf",      axes_ch_index_lock_tf, axes_ch_index_lock_tf);
 
-      private_nh_.param("axes_ch_index_right_horiz", axes_ch_index_right_horiz,  axes_ch_index_right_horiz);
-      private_nh_.param("axes_ch_index_right_vert",  axes_ch_index_right_vert,   axes_ch_index_right_vert);
-      private_nh_.param("axes_ch_index_left_horiz",  axes_ch_index_left_horiz,   axes_ch_index_left_horiz);
-      private_nh_.param("axes_ch_index_left_vert",   axes_ch_index_left_vert,    axes_ch_index_left_vert);
+      private_nh_.param("axes_ch_index_right_horiz",  axes_ch_index_right_horiz,  axes_ch_index_right_horiz);
+      private_nh_.param("axes_ch_index_right_vert",   axes_ch_index_right_vert,   axes_ch_index_right_vert);
+      private_nh_.param("axes_ch_index_left_horiz",   axes_ch_index_left_horiz,   axes_ch_index_left_horiz);
+      private_nh_.param("axes_ch_index_left_vert",    axes_ch_index_left_vert,    axes_ch_index_left_vert);
 
       private_nh_.param("axes_ch_factor_mode",        axes_ch_factor_mode,         axes_ch_factor_mode);
       private_nh_.param("axes_ch_factor_rc_on",       axes_ch_factor_rc_on,        axes_ch_factor_rc_on);
       private_nh_.param("axes_ch_factor_control",     axes_ch_factor_control,      axes_ch_factor_control);
-      private_nh_.param("axes_ch_factor_wheel",       axes_ch_factor_lock_tf,        axes_ch_factor_lock_tf);
+      private_nh_.param("axes_ch_factor_lock_tf",     axes_ch_factor_lock_tf,      axes_ch_factor_lock_tf);
 
       private_nh_.param("axes_ch_factor_right_horiz", axes_ch_factor_right_horiz,  axes_ch_factor_right_horiz);
       private_nh_.param("axes_ch_factor_right_vert",  axes_ch_factor_right_vert,   axes_ch_factor_right_vert);
       private_nh_.param("axes_ch_factor_left_horiz",  axes_ch_factor_left_horiz,   axes_ch_factor_left_horiz);
       private_nh_.param("axes_ch_factor_left_vert",   axes_ch_factor_left_vert,    axes_ch_factor_left_vert);
 
-      private_nh_.param("uav_frame_id",   uav_frame_id_,    uav_frame_id_);
-      locked_transform_.header.frame_id = "world";
-      locked_transform_.child_frame_id = uav_frame_id_;
-
-      rc_sub_ = nh_.subscribe("odometry", 1, &RcInterfaceAci::odometryCallback, this);
+      private_nh_.param("lock_tf_frame_id",   lock_tf_frame_id_,    lock_tf_frame_id_);
+      odometry_syb_ = nh_.subscribe("odometry", 1, &RcInterfaceAci::odometryCallback, this);
 
 }
 
 void RcInterfaceAci::odometryCallback(const nav_msgs::OdometryConstPtr& odom_msg)
 {
+    static tf::TransformBroadcaster tf_broadcaster;
+    static geometry_msgs::TransformStamped locked_transform;
+    locked_transform.header.frame_id = "world";
+    locked_transform.child_frame_id = lock_tf_frame_id_;
+    if(locked_transform.transform.rotation.w == 0)
+    {
+        locked_transform.transform.rotation.w = 1;
+    }
+
+
     if(lock_next_odometry_)
     {
-        locked_transform_.transform.translation.x = odom_msg->pose.pose.position.x;
-        locked_transform_.transform.translation.y = odom_msg->pose.pose.position.y;
-        locked_transform_.transform.translation.z = odom_msg->pose.pose.position.z;
-        locked_transform_.transform.rotation.w = odom_msg->pose.pose.orientation.w;
-        locked_transform_.transform.rotation.x = odom_msg->pose.pose.orientation.x;
-        locked_transform_.transform.rotation.y = odom_msg->pose.pose.orientation.y;
-        locked_transform_.transform.rotation.z = odom_msg->pose.pose.orientation.z;
+        locked_transform.transform.translation.x = odom_msg->pose.pose.position.x;
+        locked_transform.transform.translation.y = odom_msg->pose.pose.position.y;
+        locked_transform.transform.translation.z = odom_msg->pose.pose.position.z;
+        locked_transform.transform.rotation.w = odom_msg->pose.pose.orientation.w;
+        locked_transform.transform.rotation.x = odom_msg->pose.pose.orientation.x;
+        locked_transform.transform.rotation.y = odom_msg->pose.pose.orientation.y;
+        locked_transform.transform.rotation.z = odom_msg->pose.pose.orientation.z;
         ROS_INFO("Transform world > %s locked; X:%f; Y:%f; z:%f;",
-                 uav_frame_id_.c_str(),
-                 locked_transform_.transform.translation.x,
-                 locked_transform_.transform.translation.y,
-                 locked_transform_.transform.translation.z
+                 lock_tf_frame_id_.c_str(),
+                 locked_transform.transform.translation.x,
+                 locked_transform.transform.translation.y,
+                 locked_transform.transform.translation.z
                  );
         lock_next_odometry_ = false;
     }
-    locked_transform_.header.stamp = ros::Time::now();
-    tf_broadcaster_.sendTransform(locked_transform_);
+    locked_transform.header.stamp = ros::Time::now();
+    tf_broadcaster.sendTransform(locked_transform);
 }
 
 void RcInterfaceAci::rcCallback(const sensor_msgs::JoyConstPtr& msg)
