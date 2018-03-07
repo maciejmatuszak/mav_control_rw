@@ -46,6 +46,10 @@ StateMachineDefinition::StateMachineDefinition(const ros::NodeHandle& nh, const 
   private_nh_.param("thrust_offset", thrust_offset, thrust_coefficient);
   private_nh_.param("thrust_min",    thrust_min, thrust_min);
   private_nh_.param("thrust_max",    thrust_max, thrust_max);
+  ROS_INFO("ROS PARAM thrust_coefficient: %f", thrust_coefficient);
+  ROS_INFO("ROS PARAM thrust_offset:      %f", thrust_offset);
+  ROS_INFO("ROS PARAM thrust_min:         %f", thrust_min);
+  ROS_INFO("ROS PARAM thrust_max:         %f", thrust_max);
 
   predicted_state_publisher_ = nh_.advertise<visualization_msgs::Marker>( "predicted_state", 0 );
   full_predicted_state_publisher_ = 
