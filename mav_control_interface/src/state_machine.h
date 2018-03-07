@@ -205,6 +205,12 @@ class StateMachineDefinition : public msm_front::state_machine_def<StateMachineD
 private:
   static constexpr int64_t kOdometryOutdated_ns = 1000000000;
   bool use_rc_teleop_;
+
+  double      thrust_coefficient;
+  double      thrust_offset;
+  double      thrust_min;
+  double      thrust_max;
+
   std::string reference_frame_id_;
   std::shared_ptr<PositionControllerInterface> controller_;
   ros::Publisher command_publisher_;

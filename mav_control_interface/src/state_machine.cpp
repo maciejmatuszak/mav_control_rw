@@ -41,6 +41,12 @@ StateMachineDefinition::StateMachineDefinition(const ros::NodeHandle& nh, const 
 
   private_nh_.param<bool>("use_rc_teleop", use_rc_teleop_, true);
   private_nh_.param<std::string>("reference_frame", reference_frame_id_, "odom");
+
+  private_nh_.param("thrust_coefficient", thrust_coefficient, thrust_coefficient);
+  private_nh_.param("thrust_offset", thrust_offset, thrust_coefficient);
+  private_nh_.param("thrust_min",    thrust_min, thrust_min);
+  private_nh_.param("thrust_max",    thrust_max, thrust_max);
+
   predicted_state_publisher_ = nh_.advertise<visualization_msgs::Marker>( "predicted_state", 0 );
   full_predicted_state_publisher_ = 
     nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>( "full_predicted_state", 1 );
@@ -59,8 +65,19 @@ void StateMachineDefinition::PublishAttitudeCommand (
   mav_msgs::EigenRollPitchYawrateThrust tmp_command = command;
   tmp_command.thrust.x() = 0;
   tmp_command.thrust.y() = 0;
-  tmp_command.thrust.z() = std::max(0.0, command.thrust.z());
+  double thz = std::max(0.0, command.thrust.z());
+  thz       = (thz * thrust_coefficient) + thrust_offset; // this transforms it from Force in[N] to thrust in[%]
 
+  if(thz < thrust_min){
+    ROS_WARN_STREAM_THROTTLE(0.1, "Throttle command is below minimum.. set to minimum");
+    thz = thrust_min;
+  }
+  if(thz > thrust_max){
+    ROS_WARN_STREAM_THROTTLE(0.1, "Throttle command is too high.. set to max");
+    thz = thrust_max;
+  }
+
+  tmp_command.thrust.z() = thz;
   msg->header.stamp = ros::Time::now();  // TODO(acmarkus): get from msg
   mav_msgs::msgRollPitchYawrateThrustFromEigen(command, msg.get());
   command_publisher_.publish(msg);
