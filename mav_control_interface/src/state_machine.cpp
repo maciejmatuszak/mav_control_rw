@@ -64,27 +64,32 @@ void StateMachineDefinition::SetParameters(const Parameters& parameters)
 void StateMachineDefinition::PublishAttitudeCommand (
     const mav_msgs::EigenRollPitchYawrateThrust& command) const
 {
-  mav_msgs::RollPitchYawrateThrustPtr msg(new mav_msgs::RollPitchYawrateThrust);
+    mav_msgs::RollPitchYawrateThrustPtr msg(new mav_msgs::RollPitchYawrateThrust);
 
-  mav_msgs::EigenRollPitchYawrateThrust tmp_command = command;
-  tmp_command.thrust.x() = 0;
-  tmp_command.thrust.y() = 0;
-  double thz = std::max(0.0, command.thrust.z());
-  thz       = (thz * thrust_coefficient) + thrust_offset; // this transforms it from Force in[N] to thrust in[%]
+    mav_msgs::EigenRollPitchYawrateThrust tmp_command = command;
+    tmp_command.thrust.x() = 0;
+    tmp_command.thrust.y() = 0;
+    double thz;
+    double thz_org = command.thrust.z();
+    thz = std::max(0.0, thz_org);
+    controler
 
-  if(thz < thrust_min){
-    ROS_WARN_STREAM_THROTTLE(0.1, "Throttle command is below minimum.. set to minimum");
-    thz = thrust_min;
-  }
-  if(thz > thrust_max){
-    ROS_WARN_STREAM_THROTTLE(0.1, "Throttle command is too high.. set to max");
-    thz = thrust_max;
-  }
+    thz       = (thz * thrust_coefficient) + thrust_offset; // this transforms it from Force in[N] to thrust in[%]
+    ROS_INFO_THROTTLE(0.1, "Throttle org:%f; scaled:%f", thz_org, thz);
 
-  tmp_command.thrust.z() = thz;
-  msg->header.stamp = ros::Time::now();  // TODO(acmarkus): get from msg
-  mav_msgs::msgRollPitchYawrateThrustFromEigen(command, msg.get());
-  command_publisher_.publish(msg);
+    if(thz < thrust_min){
+      ROS_WARN_STREAM_THROTTLE(0.1, "Throttle command is below minimum.. set to minimum");
+      thz = thrust_min;
+    }
+    if(thz > thrust_max){
+      ROS_WARN_STREAM_THROTTLE(0.1, "Throttle command is too high.. set to max");
+      thz = thrust_max;
+    }
+
+    tmp_command.thrust.z() = thz;
+    msg->header.stamp = ros::Time::now();  // TODO(acmarkus): get from msg
+    mav_msgs::msgRollPitchYawrateThrustFromEigen(tmp_command, msg.get());
+    command_publisher_.publish(msg);
 }
 
 void StateMachineDefinition::PublishStateInfo(const std::string& info)
