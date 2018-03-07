@@ -34,3 +34,5 @@ CMakeLists\.txt\.user
 build-mav_control_interface-*/
 
 build-mav_nonlinear_mpc-*/
+
+build-mav_disturbance_observer-*/

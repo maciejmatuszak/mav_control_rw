@@ -20,6 +20,7 @@
 #define RC_INTERFACE_ACI_H_
 
 #include <mav_control_interface/rc_interface.h>
+#include <nav_msgs/Odometry.h>
 
 namespace mav_control_interface {
 
@@ -37,18 +38,25 @@ class RcInterfaceAci : public RcInterfaceBase {
 
  private:
   void rcCallback(const sensor_msgs::JoyConstPtr& msg);
+  void odometryCallback(const nav_msgs::OdometryConstPtr &odom_msg);
   bool isRcOn(const sensor_msgs::JoyConstPtr& msg) const;
 
   ros::NodeHandle nh_;
   ros::NodeHandle private_nh_;
   ros::Subscriber rc_sub_;
+  ros::Subscriber odometry_syb_;
+
+
+  ros::ServiceClient wp_nav_srv_client_;
+  std::string lock_tf_frame_id_;
+  bool lock_next_odometry_;
 
   RcData last_data_;
   bool is_on_;
   int axes_ch_index_mode;
   int axes_ch_index_rc_on;
   int axes_ch_index_control;
-  int axes_ch_index_wheel;
+  int axes_ch_index_lock_tf;
 
   int axes_ch_index_right_vert;
   int axes_ch_index_right_horiz;
@@ -62,7 +70,7 @@ class RcInterfaceAci : public RcInterfaceBase {
   double axes_ch_factor_mode;
   double axes_ch_factor_rc_on;
   double axes_ch_factor_control;
-  double axes_ch_factor_wheel;
+  double axes_ch_factor_lock_tf;
 
 };
 }  // end namespace mav_control_interface
