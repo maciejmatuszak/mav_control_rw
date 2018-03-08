@@ -62,7 +62,7 @@ void StateMachineDefinition::PublishAttitudeCommand (
   tmp_command.thrust.z() = std::max(0.0, command.thrust.z());
 
   msg->header.stamp = ros::Time::now();  // TODO(acmarkus): get from msg
-  mav_msgs::msgRollPitchYawrateThrustFromEigen(command, msg.get());
+  mav_msgs::msgRollPitchYawrateThrustFromEigen(tmp_command, msg.get());
   command_publisher_.publish(msg);
 }
 
