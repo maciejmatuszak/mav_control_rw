@@ -15,6 +15,7 @@
 * limitations under the License.
 */
 
+#include <diagnostic_updater/update_functions.h>
 #include <mav_msgs/default_topics.h>
 #include <std_msgs/String.h>
 #include <tf_conversions/tf_eigen.h>
@@ -29,10 +30,18 @@ StateMachineDefinition::StateMachineDefinition(const ros::NodeHandle& nh, const 
                                                std::shared_ptr<PositionControllerInterface> controller)
     :nh_(nh),
      private_nh_(private_nh),
-     controller_(controller)
+     controller_(controller),
+     diag_updater_(),
+     expected_odometry_freq_(50.0)
 {
   command_publisher_ = nh_.advertise<mav_msgs::RollPitchYawrateThrust>(
       mav_msgs::default_topics::COMMAND_ROLL_PITCH_YAWRATE_THRUST, 1);
+
+
+  private_nh_.param<double>("expected_odometry_freq", expected_odometry_freq_, expected_odometry_freq_);
+  command_publisher_diag_ptr_ = std::make_shared<diagnostic_updater::TopicDiagnostic>(mav_msgs::default_topics::COMMAND_ROLL_PITCH_YAWRATE_THRUST, diag_updater_,
+      diagnostic_updater::FrequencyStatusParam(&expected_odometry_freq_, &expected_odometry_freq_, 0.1, 100),
+      diagnostic_updater::TimeStampStatusParam());
 
   current_reference_publisher_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>(
       "command/current_reference", 1);
@@ -64,6 +73,7 @@ void StateMachineDefinition::PublishAttitudeCommand (
   msg->header.stamp = ros::Time::now();  // TODO(acmarkus): get from msg
   mav_msgs::msgRollPitchYawrateThrustFromEigen(tmp_command, msg.get());
   command_publisher_.publish(msg);
+  command_publisher_diag_ptr_->tick(msg->header.stamp);
 }
 
 void StateMachineDefinition::PublishStateInfo(const std::string& info)

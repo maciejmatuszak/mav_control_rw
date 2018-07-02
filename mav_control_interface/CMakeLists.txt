@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mav_control_interface)
 
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED diagnostic_updater)
 find_package(catkin_simple REQUIRED)
 catkin_simple()
 

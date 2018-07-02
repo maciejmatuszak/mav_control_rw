@@ -31,6 +31,8 @@
 #include <boost/msm/front/euml/common.hpp>
 #include <boost/msm/front/euml/operator.hpp>
 
+#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/publisher.h>
 #include <mav_msgs/conversions.h>
 #include <mav_msgs/eigen_mav_msgs.h>
 #include <ros/ros.h>
@@ -205,10 +207,15 @@ class StateMachineDefinition : public msm_front::state_machine_def<StateMachineD
 private:
   static constexpr int64_t kOdometryOutdated_ns = 1000000000;
   bool use_rc_teleop_;
+  double expected_odometry_freq_;
   std::string reference_frame_id_;
   std::shared_ptr<PositionControllerInterface> controller_;
   ros::Publisher command_publisher_;
   ros::Publisher state_info_publisher_;
+
+  //diagnostics objects
+  diagnostic_updater::Updater diag_updater_;
+  std::shared_ptr<diagnostic_updater::TopicDiagnostic> command_publisher_diag_ptr_;
 
   tf::TransformBroadcaster transform_broadcaster_;
   ros::Publisher current_reference_publisher_;
@@ -346,6 +353,7 @@ private:
       fsm.PublishAttitudeCommand(command);
       fsm.PublishCurrentReference();
       fsm.PublishPredictedState();
+      fsm.diag_updater_.update();
     }
   };
 
