@@ -340,6 +340,7 @@ private:
     {
       fsm.current_state_ = evt.odometry;
       fsm.controller_->setOdometry(evt.odometry);
+      fsm.diag_updater_.update();
     }
   };
 
@@ -353,7 +354,6 @@ private:
       fsm.PublishAttitudeCommand(command);
       fsm.PublishCurrentReference();
       fsm.PublishPredictedState();
-      fsm.diag_updater_.update();
     }
   };
 
