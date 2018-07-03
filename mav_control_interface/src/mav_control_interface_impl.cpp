@@ -20,7 +20,7 @@
 #include <mav_msgs/AttitudeThrust.h>
 #include <mav_msgs/RollPitchYawrateThrust.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
-
+#include <miner_tools/PerformanceCounter.h>
 #include "mav_control_interface_impl.h"
 #include "parameters.h"
 
@@ -126,7 +126,10 @@ void MavControlInterfaceImpl::CommandTrajectoryCallback(
 
 void MavControlInterfaceImpl::OdometryCallback(const nav_msgs::OdometryConstPtr& odometry_msg)
 {
-  ROS_INFO_ONCE("Control interface got first odometry message.");
+    static miner_tools::PerformanceCounter pc(10);
+    pc.tick();
+    ROS_INFO_ONCE("Control interface got first odometry message.");
+    ROS_INFO_THROTTLE(0.5, "MavControlInterfaceImpl::OdometryCallback call freq: %f", pc.getFrequency());
   mav_msgs::EigenOdometry odometry;
   mav_msgs::eigenOdometryFromMsg(*odometry_msg, &odometry);
   // Stamp odometry upon reception to be robust against timestamps "in the future".

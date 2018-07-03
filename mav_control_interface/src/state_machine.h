@@ -146,8 +146,8 @@ class StateMachineDefinition : public msm_front::state_machine_def<StateMachineD
 
   // Now define transition table:
   struct transition_table : boost::mpl::vector<
-      //    Start     Event         Next      Action                     Guard
-      //  +---------+-------------+---------+---------------------------+----------------------+
+      //                Start     Event         Next      Action                     Guard
+      //             +---------+-------------+---------+---------------------------+----------------------+
       msm_front::Row<Inactive, RcUpdate, RemoteControl, NoAction, euml::And_<RcModeManual, RcOn> >,
       msm_front::Row<Inactive, ReferenceUpdate, PositionHold, SetReferencePosition, NoRCTeleop>,
       msm_front::Row<Inactive, OdometryWatchdog, InternalTransition, PrintOdometryWatchdogWarning, OdometryOutdated >,
