@@ -129,7 +129,6 @@ void MavControlInterfaceImpl::OdometryCallback(const nav_msgs::OdometryConstPtr&
     static miner_tools::PerformanceCounter pc(10);
     pc.tick();
     ROS_INFO_ONCE("Control interface got first odometry message.");
-    ROS_INFO_THROTTLE(0.5, "MavControlInterfaceImpl::OdometryCallback call freq: %f", pc.getFrequency());
   mav_msgs::EigenOdometry odometry;
   mav_msgs::eigenOdometryFromMsg(*odometry_msg, &odometry);
   // Stamp odometry upon reception to be robust against timestamps "in the future".
