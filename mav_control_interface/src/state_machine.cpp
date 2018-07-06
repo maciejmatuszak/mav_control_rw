@@ -32,15 +32,17 @@ StateMachineDefinition::StateMachineDefinition(const ros::NodeHandle& nh, const 
      private_nh_(private_nh),
      controller_(controller),
      diag_updater_(),
-     expected_odometry_freq_(50.0)
+     command_output_freq_min_(30.0),
+     command_output_freq_max_(50.0)
 {
   command_publisher_ = nh_.advertise<mav_msgs::RollPitchYawrateThrust>(
       mav_msgs::default_topics::COMMAND_ROLL_PITCH_YAWRATE_THRUST, 1);
 
 
-  private_nh_.param<double>("expected_odometry_freq", expected_odometry_freq_, expected_odometry_freq_);
+  private_nh_.param<double>("command_output_freq_min", command_output_freq_min_, command_output_freq_min_);
+  private_nh_.param<double>("command_output_freq_max", command_output_freq_max_, command_output_freq_max_);
   command_publisher_diag_ptr_ = std::make_shared<diagnostic_updater::TopicDiagnostic>(mav_msgs::default_topics::COMMAND_ROLL_PITCH_YAWRATE_THRUST, diag_updater_,
-      diagnostic_updater::FrequencyStatusParam(&expected_odometry_freq_, &expected_odometry_freq_, 0.1, 100),
+      diagnostic_updater::FrequencyStatusParam(&command_output_freq_min_, &command_output_freq_max_, 0.1, 100),
       diagnostic_updater::TimeStampStatusParam());
 
   current_reference_publisher_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>(
