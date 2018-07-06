@@ -19,5 +19,4 @@
   <depend>tf</depend>
   <depend>tf_conversions</depend>
   <depend>visualization_msgs</depend>
-  <depend>miner_tools</depend>
 </package>
