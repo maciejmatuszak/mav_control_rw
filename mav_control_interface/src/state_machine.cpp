@@ -42,7 +42,7 @@ StateMachineDefinition::StateMachineDefinition(const ros::NodeHandle& nh, const 
   private_nh_.param<double>("command_output_freq_min", command_output_freq_min_, command_output_freq_min_);
   private_nh_.param<double>("command_output_freq_max", command_output_freq_max_, command_output_freq_max_);
   command_publisher_diag_ptr_ = std::make_shared<diagnostic_updater::TopicDiagnostic>(mav_msgs::default_topics::COMMAND_ROLL_PITCH_YAWRATE_THRUST, diag_updater_,
-      diagnostic_updater::FrequencyStatusParam(&command_output_freq_min_, &command_output_freq_max_, 0.1, 100),
+      diagnostic_updater::FrequencyStatusParam(&command_output_freq_min_, &command_output_freq_max_, 0.1, 5),
       diagnostic_updater::TimeStampStatusParam());
 
   current_reference_publisher_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>(
